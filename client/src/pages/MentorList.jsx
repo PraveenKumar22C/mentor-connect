@@ -146,7 +146,7 @@ const MentorList = () => {
               className={`flex items-center space-x-2 px-4 py-3 border-2 rounded-lg font-medium transition-colors duration-200 ${
                 isFilterOpen || getActiveFiltersCount() > 0
                   ? "border-primary-600 bg-primary-50 text-primary-600 dark:bg-primary-900/20"
-                  : "border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  : "border-gray-300 dark:border-gray-600 text-secondary-100 hover:bg-gray-50 dark:hover:bg-gray-700"
               }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
