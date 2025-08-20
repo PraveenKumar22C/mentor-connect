@@ -1,38 +1,41 @@
-import React, { useState, useEffect } from 'react'
-import { X, Calendar, Clock, User, Mail, Phone, MessageSquare } from 'lucide-react'
-import { formatCurrency } from '../utils/currency'
-import { getNext7Days, formatFullDate, formatTime } from '../utils/date'
-import api from '../utils/api'
-import toast from 'react-hot-toast'
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Calendar, Clock, User, Mail, Phone, MessageSquare } from 'lucide-react';
+import { formatCurrency } from '../utils/currency';
+import { getNext7Days, formatFullDate, formatTime } from '../utils/date';
+import api from '../utils/api';
+import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const BookingModal = ({ isOpen, onClose, mentor }) => {
-  const [selectedDuration, setSelectedDuration] = useState(30)
-  const [selectedDate, setSelectedDate] = useState(null)
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null)
-  const [availableSlots, setAvailableSlots] = useState([])
+  const navigate = useNavigate();
+  const [selectedDuration, setSelectedDuration] = useState(30);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+  const [availableSlots, setAvailableSlots] = useState([]);
   const [formData, setFormData] = useState({
     studentName: '',
     studentEmail: '',
     studentPhone: '',
     notes: ''
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [currentDateIndex, setCurrentDateIndex] = useState(0)
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentDateIndex, setCurrentDateIndex] = useState(0);
+  const hasSubmittedRef = useRef(false); // Track if submission has occurred
 
-  const dates = getNext7Days()
-  const visibleDates = dates.slice(currentDateIndex, currentDateIndex + 3)
+  const dates = getNext7Days();
+  const visibleDates = dates.slice(currentDateIndex, currentDateIndex + 3);
 
   useEffect(() => {
     if (dates.length > 0 && !selectedDate) {
-      setSelectedDate(dates[0].date)
+      setSelectedDate(dates[0].date);
     }
-  }, [dates])
+  }, [dates]);
 
   useEffect(() => {
     if (selectedDate && mentor) {
-      fetchAvailableSlots()
+      fetchAvailableSlots();
     }
-  }, [selectedDate, mentor])
+  }, [selectedDate, mentor]);
 
   const fetchAvailableSlots = async () => {
     try {
@@ -41,44 +44,49 @@ const BookingModal = ({ isOpen, onClose, mentor }) => {
           mentorId: mentor._id,
           date: selectedDate.toISOString().split('T')[0]
         }
-      })
+      });
       if (response.data.success) {
-        setAvailableSlots(response.data.data)
-        setSelectedTimeSlot(null)
+        setAvailableSlots(response.data.data);
+        setSelectedTimeSlot(null);
       }
     } catch (error) {
-      console.error('Error fetching available slots:', error)
-      toast.error('Failed to fetch available time slots')
+      console.error('Error fetching available slots:', error);
+      toast.error('Failed to fetch available time slots');
     }
-  }
+  };
 
   const handleDateNavigation = (direction) => {
     if (direction === 'prev' && currentDateIndex > 0) {
-      setCurrentDateIndex(currentDateIndex - 1)
+      setCurrentDateIndex(currentDateIndex - 1);
     } else if (direction === 'next' && currentDateIndex < dates.length - 3) {
-      setCurrentDateIndex(currentDateIndex + 1)
+      setCurrentDateIndex(currentDateIndex + 1);
     }
-  }
+  };
 
   const getSelectedPrice = () => {
-    const pricing = mentor?.pricing?.find(p => p.duration === selectedDuration)
-    return pricing ? pricing.price : 0
-  }
+    const pricing = mentor?.pricing?.find(p => p.duration === selectedDuration);
+    return pricing ? pricing.price : 0;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
+    if (hasSubmittedRef.current) {
+      return; // Prevent multiple submissions
+    }
+
     if (!selectedDate || !selectedTimeSlot) {
-      toast.error('Please select a date and time slot')
-      return
+      toast.error('Please select a date and time slot');
+      return;
     }
 
     if (!formData.studentName || !formData.studentEmail || !formData.studentPhone) {
-      toast.error('Please fill in all required fields')
-      return
+      toast.error('Please fill in all required fields');
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
+    hasSubmittedRef.current = true; // Mark as submitted
 
     try {
       const bookingData = {
@@ -91,24 +99,25 @@ const BookingModal = ({ isOpen, onClose, mentor }) => {
         duration: selectedDuration,
         price: getSelectedPrice(),
         notes: formData.notes
-      }
+      };
 
-      const response = await api.post('/bookings', bookingData)
-      
+      const response = await api.post('/bookings', bookingData);
+
       if (response.data.success) {
-        toast.success('Booking created successfully!')
-        onClose()
-        window.location.href = `/booking-success?id=${response.data.data._id}`
+        toast.success('Booking created successfully!');
+        onClose();
+        navigate(`/booking-success?id=${response.data.data._id}`);
       }
     } catch (error) {
-      console.error('Error creating booking:', error)
-      toast.error(error.response?.data?.message || 'Failed to create booking')
+      console.error('Error creating booking:', error);
+      toast.error(error.response?.data?.message || 'Failed to create booking');
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
+      hasSubmittedRef.current = false; // Reset for future submissions
     }
-  }
+  };
 
-  if (!isOpen || !mentor) return null
+  if (!isOpen || !mentor) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -334,7 +343,7 @@ const BookingModal = ({ isOpen, onClose, mentor }) => {
               <h4 className="font-medium text-gray-900 dark:text-white mb-2">
                 Booking Summary
               </h4>
-              <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+              <div className="space-y-1 text-sm text-gray-600 dark:text-400">
                 <div className="flex justify-between">
                   <span>Duration:</span>
                   <span>{selectedDuration} minutes</span>
@@ -375,7 +384,7 @@ const BookingModal = ({ isOpen, onClose, mentor }) => {
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default BookingModal
+export default BookingModal;
