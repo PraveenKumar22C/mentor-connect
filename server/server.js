@@ -24,7 +24,7 @@ const limiter = rateLimit({
 app.use(helmet());
 app.use(limiter);
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? 'https://mentor-connect-ui.netlify.app/' : 'http://localhost:5173',
+  origin: 'https://mentor-connect-ui.netlify.app',
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
