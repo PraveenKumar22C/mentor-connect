@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import Mentor from './Mentor.js';
 
 const bookingSchema = new mongoose.Schema({
   mentorId: {
@@ -34,7 +35,14 @@ const bookingSchema = new mongoose.Schema({
     name: {
       type: String,
       required: true,
-      enum: ['Morning (9 AM to 1 PM)', 'Afternoon (1 PM to 5 PM)', 'Evening (5 PM to 9 PM)', 'Late Night (9 PM to 1 AM)']
+      validate: {
+        validator: async function(value) {
+          const mentor = await Mentor.findById(this.mentorId);
+          if (!mentor) return false;
+          return mentor.timeSlots.some(slot => slot.name === value && slot.available);
+        },
+        message: 'Invalid time slot or slot not available for this mentor'
+      }
     },
     startTime: {
       type: String,
