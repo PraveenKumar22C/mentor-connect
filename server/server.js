@@ -24,7 +24,7 @@ const limiter = rateLimit({
 app.use(helmet());
 app.use(limiter);
 app.use(cors({
-  origin: 'https://mentor-connect-ui.netlify.app',
+  origin: process.env.NODE_ENV === 'production' ? 'https://mentor-connect-weld.vercel.app/' : 'http://localhost:5173',
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
